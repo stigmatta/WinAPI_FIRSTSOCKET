@@ -18,31 +18,30 @@ SOCKET acceptSocket;
 sockaddr_in addr;
 
 void CreateServerSocket() {
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-	_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	addr.sin_family = AF_INET;
-	inet_pton(AF_INET, "0.0.0.0", &addr.sin_addr);
-	addr.sin_port = htons(20000);
-	bind(_socket, (SOCKADDR*)&addr, sizeof(addr));
-	listen(_socket, 1);
-	acceptSocket = accept(_socket, NULL, NULL);
-	char buf[MAXSTRLEN];
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+    _socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "0.0.0.0", &addr.sin_addr);
+    addr.sin_port = htons(20000);
+    bind(_socket, (SOCKADDR*)&addr, sizeof(addr));
+    listen(_socket, 1);
+    acceptSocket = accept(_socket, NULL, NULL);
+
+    char buf[MAXSTRLEN];
     GetWindowTextA(CServerDlg::ptr->hEdit, buf, MAXSTRLEN);
     send(acceptSocket, buf, strlen(buf) + 1, 0);
-	int i = recv(acceptSocket, buf, MAXSTRLEN, 0);
-	buf[i] = '\0';
+    int i = recv(acceptSocket, buf, MAXSTRLEN, 0);
+    buf[i] = '\0';
 
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, buf, -1, NULL, 0);
-    wchar_t* dest = new wchar_t[size_needed];
-    MultiByteToWideChar(CP_UTF8, 0, buf, -1, dest, size_needed);
+    SendMessageA(CServerDlg::ptr->hEditReadOnly, EM_SETSEL, -1, -1); 
+    SendMessageA(CServerDlg::ptr->hEditReadOnly, EM_REPLACESEL, TRUE, (LPARAM)buf);
+    SendMessageA(CServerDlg::ptr->hEditReadOnly, EM_REPLACESEL, TRUE, (LPARAM)"   ");
 
-    SetWindowText(CServerDlg::ptr->hEditReadOnly, dest);
-
-	closesocket(acceptSocket);
-	closesocket(_socket);
-	WSACleanup();
-	system("pause");
+    WSACleanup();
+    system("pause");
 }
+
+
 
 
 
@@ -66,7 +65,7 @@ void CServerDlg::Cls_OnClose(HWND hwnd)
 
 BOOL CServerDlg::Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
     hButtonStart = GetDlgItem(hwnd, IDC_START);
-    hButtonSend = GetDlgItem(hwnd, IDC_SEND);
+    hButtonEnd = GetDlgItem(hwnd, IDC_END);
     hEditReadOnly = GetDlgItem(hwnd, IDC_READONLY);
     hEdit = GetDlgItem(hwnd, IDC_EDIT1);
 
@@ -79,17 +78,7 @@ void CServerDlg::Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     if (id == IDC_START) {
         CreateServerSocket();
     }
-    else if (id == IDC_SEND) {
-        GetDlgItemText(hwnd, IDC_EDIT1, text, MAXSTRLEN);
-
-        int len = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
-        char* utf8Text = new char[len];
-        WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8Text, len, NULL, NULL);
-
-        send(acceptSocket, utf8Text, strlen(utf8Text), 0);
-
-        delete[] utf8Text;
-
+    else if (id == IDC_END) {
         closesocket(acceptSocket);
         closesocket(_socket);
         WSACleanup();

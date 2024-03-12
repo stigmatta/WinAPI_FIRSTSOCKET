@@ -16,26 +16,23 @@ SOCKET _socket;
 sockaddr_in addr;
 
 void CreateClientSocket(HWND hwnd) {
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-	_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	addr.sin_family = AF_INET;
-	inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
-	addr.sin_port = htons(20000);
-	connect(_socket, (SOCKADDR*)&addr, sizeof(addr));
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+    _socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+    addr.sin_port = htons(20000);
+    connect(_socket, (SOCKADDR*)&addr, sizeof(addr));
 
-	char buf[MAXSTRLEN],buf2[MAXSTRLEN];
+    char buf[MAXSTRLEN], buf2[MAXSTRLEN];
     int i = recv(_socket, buf, MAXSTRLEN, 0);
     buf[i] = '\0';
-    SetWindowTextA(CClientDlg::ptr->hEditReadOnly, buf);
-    GetWindowTextA(CClientDlg::ptr->hEdit, buf2,strlen(buf2));
-	send(_socket, buf2, strlen(buf2), 0);
+    SendMessageA(CClientDlg::ptr->hEditReadOnly, EM_SETSEL, -1, -1);
+    SendMessageA(CClientDlg::ptr->hEditReadOnly, EM_REPLACESEL, TRUE, (LPARAM)buf);
+    SendMessageA(CClientDlg::ptr->hEditReadOnly, EM_REPLACESEL, TRUE, (LPARAM)"   ");
+    GetWindowTextA(CClientDlg::ptr->hEdit, buf2, strlen(buf2));
+    send(_socket, buf2, strlen(buf2), 0);
+    system("pause");
 
-	
-
-
-	closesocket(_socket);
-	WSACleanup();
-	system("pause");
 }
 
 
@@ -63,13 +60,7 @@ void CClientDlg::Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     if (id == IDCONNECT) {
         CreateClientSocket(hwnd);
     }
-    else if (id == IDC_SEND) {
-        GetDlgItemText(hwnd, IDC_EDIT2, text, MAXSTRLEN);
-        int len = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
-        char* utf8Text = new char[len];
-        WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8Text, len, NULL, NULL);
-        send(_socket, utf8Text, strlen(utf8Text), 0);
-        delete[] utf8Text;
+    else if (id == IDC_END) {
         closesocket(_socket);
         WSACleanup();
     }
